@@ -16,53 +16,65 @@ export default function Home() {
   const [prediction, setPrediction] = useState<Prediction>();
   const [error, setError] = useState<string>('');
 
+  const [disabled, setDisabled] = useState(false);
+
   const [prompt, setPrompt] = useState('');
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
+    setDisabled(true);
 
-    const response = await fetch("/api/predictions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-        image: canvasRef.current?.toDataURL()
-      }),
-    });
+    try {
+      const response = await fetch("/api/predictions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+          image: canvasRef.current?.toDataURL()
+        }),
+      });
 
-    let prediction = await response.json();
+      let prediction = await response.json();
 
-    if (response.status !== 201) {
-      setError(prediction.detail);
-      return;
-    }
-
-    setPrediction(prediction);
-
-    while (
-      prediction.status !== "succeeded" &&
-      prediction.status !== "failed"
-    ) {
-      await sleep(1000);
-
-      const response = await fetch("/api/predictions/" + prediction.id);
-      prediction = await response.json();
-
-      if (response.status !== 200) {
+      if (response.status !== 201) {
         setError(prediction.detail);
         return;
       }
 
-      console.log({ prediction });
       setPrediction(prediction);
+      window.scrollTo(0, 0);
+
+      while (
+        prediction.status !== "succeeded" &&
+        prediction.status !== "failed"
+      ) {
+        await sleep(1000);
+
+        const response = await fetch("/api/predictions/" + prediction.id);
+        prediction = await response.json();
+
+        if (response.status !== 200) {
+          setError(prediction.detail);
+          return;
+        }
+
+        console.log({ prediction });
+        setPrediction(prediction);
+      }
+    } catch (error) {
+      console.error('Failed to fetch prediction', error);
+      setError('Failed to fetch prediction');
+    } finally {
+      setDisabled(false);
     }
   };
 
   const handleRestart = () => {
     setPrediction(undefined);
     setPrompt('');
+    setDisabled(false);
   };
 
   return (
@@ -87,8 +99,9 @@ export default function Home() {
                   value={prompt}
                   onChange={(event) => setPrompt(event.target.value)}
                   placeholder="Enter a prompt to display an image"
+                  disabled={disabled}
                 />
-                <button type="submit">Go!</button>
+                <button type="submit" disabled={disabled}>Go!</button>
               </form>
             </>
           }

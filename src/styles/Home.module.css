@@ -51,3 +51,9 @@
 .imageWrapper {
   width: 500px;
 }
+
+.predictionContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}

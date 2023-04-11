@@ -50,10 +50,16 @@
 
 .imageWrapper {
   width: 500px;
+  max-width: 100%;
+}
+
+.outputImage {
+  width: 100%;
 }
 
 .predictionContainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  max-width: 80vw;
 }

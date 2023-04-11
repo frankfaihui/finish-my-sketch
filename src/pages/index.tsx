@@ -115,6 +115,7 @@ export default function Home() {
                 <div className={styles.imageWrapper}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
+                    className={styles.outputImage}
                     src={prediction.output[prediction.output.length - 1]}
                     alt="output"
                   />

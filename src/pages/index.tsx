@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import Head from 'next/head';
 import styles from '@/styles/Home.module.css';
 import ReactSimpleWhiteBoard from 'react-simple-white-board';
+import Loader from '@/components/Loader';
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -23,6 +24,8 @@ export default function Home() {
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     setDisabled(true);
+
+    let count = 0;
 
     try {
       const response = await fetch("/api/predictions", {
@@ -50,6 +53,10 @@ export default function Home() {
         prediction.status !== "succeeded" &&
         prediction.status !== "failed"
       ) {
+        if (count > 30) {
+          throw new Error('Failed to fetch prediction, reached maximum try');
+        }
+        count++;
         await sleep(1000);
 
         const response = await fetch("/api/predictions/" + prediction.id);
@@ -93,35 +100,44 @@ export default function Home() {
               </div>
 
               <form className={styles.form} onSubmit={handleSubmit}>
-                <input
-                  type="text"
+                <textarea
                   name="prompt"
+                  rows={5}
                   value={prompt}
                   onChange={(event) => setPrompt(event.target.value)}
                   placeholder="Enter a prompt to display an image"
                   disabled={disabled}
                 />
-                <button type="submit" disabled={disabled}>Go!</button>
+                <button className={styles.button} type="submit" disabled={disabled}>Go!</button>
               </form>
             </>
           }
 
-          {error && <div>{error}</div>}
+          {error && <div>Error occurred. Please try again.</div>}
 
           {prediction && (
             <div className={styles.predictionContainer}>
-              <p>status: {prediction.status}</p>
-              {prediction.output && (
+              {
+                !error &&
                 <div className={styles.imageWrapper}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    className={styles.outputImage}
-                    src={prediction.output[prediction.output.length - 1]}
-                    alt="output"
-                  />
+                  {prediction.output
+                    ?
+                    <div className={styles.imageWrapper}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        className={styles.outputImage}
+                        src={prediction.output[prediction.output.length - 1]}
+                        alt="output"
+                      />
+                    </div>
+                    :
+                    <Loader />
+                  }
                 </div>
-              )}
-              {prediction.status === 'succeeded' && <button onClick={handleRestart}>Restart</button>}
+              }
+              {(prediction.status === 'succeeded' || error) &&
+                <button className={styles.button} onClick={handleRestart}>Restart</button>
+              }
             </div>
           )}
         </div>

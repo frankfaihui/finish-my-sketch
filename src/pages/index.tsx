@@ -141,6 +141,7 @@ export default function Home() {
             </div>
           )}
         </div>
+        <a href="https://github.com/frankfaihui/finish-my-sketch" className={styles.link}>Github</a>
       </main>
     </>
   )
